@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Shared With Me - SecureShare{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Shared With Me</h1>
+    </div>
+
+    <div class="card">
+        <div class="card-body" style="padding: 0;">
+            {% if files %}
+            <table class="file-table">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Type</th>
+                        <th>Size</th>
+                        <th>Shared By</th>
+                        <th>Permission</th>
+                        <th>Shared On</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td class="file-name">{{ file.original_filename }}</td>
+                        <td><span class="file-type-badge">{{ file.file_type or 'N/A' }}</span></td>
+                        <td>{{ file.file_size | filesize }}</td>
+                        <td>{{ file.owner_name }}</td>
+                        <td><span class="file-type-badge">{{ file.permission }}</span></td>
+                        <td>{{ file.shared_at | timeago }}</td>
+                        <td>
+                            <a href="{{ url_for('download_file', file_id=file.id) }}" class="btn btn-sm btn-primary">Download</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">&#128229;</div>
+                <h3>No files shared with you yet</h3>
+                <p>Files shared by other users will appear here</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

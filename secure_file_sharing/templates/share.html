@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Share File - SecureShare{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 800px;">
+    <div class="page-header">
+        <h1>Share: {{ file.original_filename }}</h1>
+        <a href="{{ url_for('my_files') }}" class="btn btn-sm btn-secondary">Back to Files</a>
+    </div>
+
+    <div class="share-section">
+        <h3>&#128101; Share with a User</h3>
+        <form method="POST">
+            <input type="hidden" name="share_type" value="user">
+            <div style="display: flex; gap: 12px; align-items: flex-end;">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="Enter username" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="permission">Permission</label>
+                    <select id="permission" name="permission" class="form-control">
+                        <option value="view">View & Download</option>
+                        <option value="download">Download Only</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-bottom: 0;">Share</button>
+            </div>
+        </form>
+
+        {% if shares %}
+        <div style="margin-top: 1rem;">
+            <h4 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Currently shared with:</h4>
+            {% for share in shares %}
+            <div class="share-link-item">
+                <span><strong>{{ share.shared_with_name }}</strong> ({{ share.permission }})</span>
+                <form method="POST" action="{{ url_for('remove_share', share_id=share.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="share-section">
+        <h3>&#128279; Create Share Link</h3>
+        <form method="POST">
+            <input type="hidden" name="share_type" value="link">
+            <div class="two-col">
+                <div class="form-group">
+                    <label for="expires_hours">Expires After (hours)</label>
+                    <select id="expires_hours" name="expires_hours" class="form-control">
+                        <option value="">Never</option>
+                        <option value="1">1 hour</option>
+                        <option value="6">6 hours</option>
+                        <option value="24">24 hours</option>
+                        <option value="72">3 days</option>
+                        <option value="168">7 days</option>
+                        <option value="720">30 days</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="max_downloads">Max Downloads</label>
+                    <select id="max_downloads" name="max_downloads" class="form-control">
+                        <option value="">Unlimited</option>
+                        <option value="1">1 download</option>
+                        <option value="5">5 downloads</option>
+                        <option value="10">10 downloads</option>
+                        <option value="25">25 downloads</option>
+                        <option value="100">100 downloads</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="link_password">Password Protection (optional)</label>
+                <input type="password" id="link_password" name="link_password" class="form-control" placeholder="Leave empty for no password">
+            </div>
+            <button type="submit" class="btn btn-success">Generate Link</button>
+        </form>
+
+        {% if links %}
+        <div style="margin-top: 1.5rem;">
+            <h4 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Active share links:</h4>
+            {% for link in links %}
+            {% set share_url = request.host_url.rstrip('/') + url_for('access_shared', token=link.share_token) %}
+            <div style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+                    <input 
+                        type="text" 
+                        value="{{ share_url }}" 
+                        id="link-{{ link.id }}"
+                        readonly
+                        class="form-control"
+                        style="flex: 1; font-size: 0.8rem; font-family: monospace; min-width: 200px; background: white; cursor: pointer;"
+                        onclick="this.select()"
+                    >
+                    <button 
+                        onclick="copyLink('link-{{ link.id }}', this)" 
+                        class="btn btn-primary btn-sm"
+                        type="button"
+                        style="white-space: nowrap;">
+                        &#128203; Copy Link
+                    </button>
+                    <a href="{{ share_url }}" target="_blank" class="btn btn-sm btn-success" style="white-space: nowrap;">
+                        &#128065; Open
+                    </a>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px; font-size: 0.8rem; color: var(--text-secondary); flex-wrap: wrap;">
+                    <span>&#128229; {{ link.download_count }}{% if link.max_downloads %}/{{ link.max_downloads }}{% endif %} downloads</span>
+                    {% if link.password_hash %}<span>&#128274; Password protected</span>{% endif %}
+                    {% if link.expires_at %}<span>&#8987; Expires {{ link.expires_at | timeago }}</span>{% endif %}
+                    {% if link.is_active %}
+                    <form method="POST" action="{{ url_for('revoke_link', link_id=link.id) }}" style="display:inline; margin-left: auto;">
+                        <button type="submit" class="btn btn-sm btn-danger">Revoke</button>
+                    </form>
+                    {% else %}
+                    <span style="color: var(--danger); margin-left: auto;">&#10005; Revoked</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function copyLink(inputId, btn) {
+    const input = document.getElementById(inputId);
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value).then(function() {
+        const original = btn.innerHTML;
+        btn.innerHTML = '&#10003; Copied!';
+        btn.style.background = 'var(--success)';
+        setTimeout(function() {
+            btn.innerHTML = original;
+            btn.style.background = '';
+        }, 2000);
+    }).catch(function() {
+        document.execCommand('copy');
+        btn.innerHTML = '&#10003; Copied!';
+        setTimeout(function() { btn.innerHTML = '&#128203; Copy Link'; }, 2000);
+    });
+}
+</script>
+{% endblock %}
