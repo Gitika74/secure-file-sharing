@@ -37,6 +37,8 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def get_db():
     db_url = os.environ.get('DATABASE_URL') or CONFIG_DB_URL
+    if db_url and db_url.startswith('postgres://'):
+        db_url = db_url.replace('postgres://', 'postgresql://', 1)
     conn = psycopg2.connect(db_url)
     conn.autocommit = True
     return conn
