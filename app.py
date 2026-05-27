@@ -16,11 +16,13 @@ from flask import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import psycopg2
 import psycopg2.extras
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.secret_key = os.environ.get('SESSION_SECRET', secrets.token_hex(32))
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
@@ -506,7 +508,7 @@ def share_file(file_id):
             ''', (file_id, share_token, session['user_id'], expires_at, max_dl, pwd_hash))
 
             log_activity(session['user_id'], 'create_link', file_id, 'Created share link')
-            share_url = request.host_url.rstrip('/') + url_for('access_shared', token=share_token)
+            share_url = url_for('access_shared', token=share_token, _external=True)
             flash(f'Share link created: {share_url}', 'success')
 
     cur.execute('''
