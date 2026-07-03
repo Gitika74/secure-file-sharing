@@ -25,6 +25,10 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.secret_key = os.environ.get('SESSION_SECRET', secrets.token_hex(32))
 
+PREFERRED_BASE_URL = os.environ.get('REPLIT_DOMAINS', '').split(',')[0].strip()
+if PREFERRED_BASE_URL:
+    PREFERRED_BASE_URL = 'https://' + PREFERRED_BASE_URL
+
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'zip', 'rar', 'csv', 'ppt', 'pptx', 'mp4', 'mp3'}
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024
@@ -510,7 +514,10 @@ def share_file(file_id):
             ''', (file_id, share_token, session['user_id'], expires_at, max_dl, pwd_hash))
 
             log_activity(session['user_id'], 'create_link', file_id, 'Created share link')
-            share_url = url_for('access_shared', token=share_token, _external=True)
+            if PREFERRED_BASE_URL:
+                share_url = f"{PREFERRED_BASE_URL}{url_for('access_shared', token=share_token)}"
+            else:
+                share_url = request.host_url.rstrip('/') + url_for('access_shared', token=share_token)
             flash(f'Share link created: {share_url}', 'success')
 
     cur.execute('''
@@ -526,7 +533,7 @@ def share_file(file_id):
     cur.close()
     conn.close()
 
-    return render_template('share.html', file=file, shares=shares, links=links)
+    return render_template('share.html', file=file, shares=shares, links=links, preferred_base_url=PREFERRED_BASE_URL)
 
 
 @app.route('/shared/<token>', methods=['GET', 'POST'])
@@ -618,6 +625,39 @@ def remove_share(share_id):
     conn.close()
     flash('Share removed.', 'success')
     return redirect(request.referrer or url_for('my_files'))
+
+
+@app.route('/admin/users')
+@login_required
+def admin_users():
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute('''
+        SELECT u.*,
+               (SELECT COUNT(*) FROM files WHERE owner_id = u.id) as file_count,
+               (SELECT COUNT(*) FROM share_links WHERE created_by = u.id AND is_active = TRUE) as active_links
+        FROM users u
+        ORDER BY u.created_at DESC
+    ''')
+    users = cur.fetchall()
+
+    cur.execute('SELECT COUNT(*) FROM users')
+    total_users = cur.fetchone()[0]
+
+    cur.execute('SELECT COUNT(*) FROM files')
+    total_files_all = cur.fetchone()[0]
+
+    cur.execute('SELECT COUNT(*) FROM share_links WHERE is_active = TRUE')
+    total_links = cur.fetchone()[0]
+
+    cur.close()
+    conn.close()
+
+    return render_template('admin_users.html',
+                         users=users,
+                         total_users=total_users,
+                         total_files_all=total_files_all,
+                         total_links=total_links)
 
 
 @app.route('/profile')
