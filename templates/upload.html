@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Upload File - SecureShare{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 700px;">
+    <div class="page-header">
+        <h1>Upload File</h1>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                    <div class="icon">&#128228;</div>
+                    <h3>Click to select a file or drag & drop</h3>
+                    <p id="selectedFile">Maximum file size: 16 MB</p>
+                </div>
+                <input type="file" id="fileInput" name="file" style="display: none;" required onchange="showFileName(this)">
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label for="description">Description (optional)</label>
+                    <textarea id="description" name="description" class="form-control" placeholder="Add a description for your file..."></textarea>
+                </div>
+
+                <p class="form-text" style="margin-bottom: 1rem;">
+                    Allowed file types: {{ allowed_extensions | join(', ') }}
+                </p>
+
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; justify-content: center;">Upload File</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function showFileName(input) {
+    if (input.files && input.files[0]) {
+        const fileName = input.files[0].name;
+        const fileSize = (input.files[0].size / (1024 * 1024)).toFixed(2);
+        document.getElementById('selectedFile').textContent = fileName + ' (' + fileSize + ' MB)';
+        document.getElementById('dropZone').style.borderColor = '#2563eb';
+        document.getElementById('dropZone').style.background = '#dbeafe';
+    }
+}
+
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '#2563eb';
+    this.style.background = '#dbeafe';
+});
+dropZone.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '';
+    this.style.background = '';
+});
+dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    const fileInput = document.getElementById('fileInput');
+    fileInput.files = e.dataTransfer.files;
+    showFileName(fileInput);
+});
+</script>
+{% endblock %}

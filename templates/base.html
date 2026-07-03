@@ -21,7 +21,6 @@
             <li><a href="{{ url_for('upload') }}" class="{% if request.endpoint == 'upload' %}active{% endif %}">Upload</a></li>
             <li><a href="{{ url_for('my_files') }}" class="{% if request.endpoint == 'my_files' %}active{% endif %}">My Files</a></li>
             <li><a href="{{ url_for('shared_with_me') }}" class="{% if request.endpoint == 'shared_with_me' %}active{% endif %}">Shared</a></li>
-            <li><a href="{{ url_for('admin_users') }}" class="{% if request.endpoint == 'admin_users' %}active{% endif %}">Admin</a></li>
             {% endif %}
         </ul>
         <div class="navbar-user">

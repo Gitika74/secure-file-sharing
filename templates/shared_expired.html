@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Link Expired - SecureShare{% endblock %}
+{% block content %}
+<div class="shared-page">
+    <div class="shared-card">
+        <div class="file-icon">&#9888;&#65039;</div>
+        <h2>Link Unavailable</h2>
+        <p class="file-details">This share link has expired or reached its download limit.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Go to Home</a>
+    </div>
+</div>
+{% endblock %}

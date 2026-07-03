@@ -82,11 +82,7 @@
         <div style="margin-top: 1.5rem;">
             <h4 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Active share links:</h4>
             {% for link in links %}
-            {% if preferred_base_url %}
-            {% set share_url = preferred_base_url.rstrip('/') + url_for('access_shared', token=link.share_token) %}
-            {% else %}
             {% set share_url = request.host_url.rstrip('/') + url_for('access_shared', token=link.share_token) %}
-            {% endif %}
             <div style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
                     <input 
@@ -115,4 +111,37 @@
                     {% if link.expires_at %}<span>&#8987; Expires {{ link.expires_at | timeago }}</span>{% endif %}
                     {% if link.is_active %}
                     <form method="POST" action="{{ url_for('revoke_link', link_id=link.id) }}" style="display:inline; margin-left: auto;">
-                        <button
+                        <button type="submit" class="btn btn-sm btn-danger">Revoke</button>
+                    </form>
+                    {% else %}
+                    <span style="color: var(--danger); margin-left: auto;">&#10005; Revoked</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function copyLink(inputId, btn) {
+    const input = document.getElementById(inputId);
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value).then(function() {
+        const original = btn.innerHTML;
+        btn.innerHTML = '&#10003; Copied!';
+        btn.style.background = 'var(--success)';
+        setTimeout(function() {
+            btn.innerHTML = original;
+            btn.style.background = '';
+        }, 2000);
+    }).catch(function() {
+        document.execCommand('copy');
+        btn.innerHTML = '&#10003; Copied!';
+        setTimeout(function() { btn.innerHTML = '&#128203; Copy Link'; }, 2000);
+    });
+}
+</script>
+{% endblock %}
