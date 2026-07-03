@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Admin - Users - SecureShare{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Admin Panel - Registered Users</h1>
+    </div>
+
+    <div class="stats-grid" style="margin-bottom: 2rem;">
+        <div class="stat-card">
+            <div class="stat-icon blue">&#128100;</div>
+            <div class="stat-info">
+                <h3>{{ total_users }}</h3>
+                <p>Total Users</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green">&#128196;</div>
+            <div class="stat-info">
+                <h3>{{ total_files_all }}</h3>
+                <p>Total Files</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon orange">&#128279;</div>
+            <div class="stat-info">
+                <h3>{{ total_links }}</h3>
+                <p>Active Links</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>All Registered Users</h2>
+        </div>
+        <div class="card-body">
+            {% if users %}
+            <table class="file-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Full Name</th>
+                        <th>Files</th>
+                        <th>Active Links</th>
+                        <th>Joined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ user.username }}</strong></td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.full_name }}</td>
+                        <td>{{ user.file_count }}</td>
+                        <td>{{ user.active_links }}</td>
+                        <td>{{ user.created_at | timeago }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">&#128100;</div>
+                <h3>No users registered yet</h3>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
